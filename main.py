@@ -7,7 +7,7 @@ from scipy.linalg import toeplitz
 from gensim.models import KeyedVectors
 
 
-def assemble_model(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
+def assemble_model_full(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
     voc_size = init_vectors.shape[0]
     emb_dim = init_vectors.shape[1]
 
@@ -112,6 +112,78 @@ def assemble_model(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=Fal
         'accuracy': accuracy,
         'argmax': argmax
     }
+
+def assemble_model(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
+    voc_size = init_vectors.shape[0]
+    emb_dim = init_vectors.shape[1]
+
+    d_win = 3
+    h1_size = 500
+    h2_size = 200
+
+    h1_kernel_shape = (d_win, emb_dim)
+
+    tf_words = tf.placeholder(shape=(None, seq_len), dtype=tf.int32, name="words")
+    tf_labels = tf.placeholder(shape=(None, seq_len), dtype=tf.int32, name="labels")
+    tf_lengths = tf.placeholder(shape=(None,), dtype=tf.int32, name="lengths")
+
+    def create_embedding_matrix():
+        n_dims = init_vectors.shape[1]
+        embs = tf.get_variable("embeddings", initializer=init_vectors, dtype=tf.float32, trainable=train_embeddings)
+        pad = tf.zeros(shape=(1, n_dims), name="pad")
+        emb_matr = tf.concat([embs, pad], axis=0)
+        return emb_matr
+
+    def convolutional_layer(input, units, cnn_kernel_shape, activation=None):
+        # padded = tf.pad(input, tf.constant([[0, 0], [1, 1], [0, 0]]))
+        emb_sent_exp = tf.expand_dims(input, axis=3)
+        convolve = tf.layers.conv2d(emb_sent_exp,
+                                    units,
+                                    cnn_kernel_shape,
+                                    activation=activation,
+                                    data_format='channels_last',
+                                    padding='same',
+                                    name="conv_h1")
+        return tf.reshape(convolve, shape=(-1, convolve.shape[1], units))
+
+    emv_matr = create_embedding_matrix()
+
+    emb_sent = tf.nn.embedding_lookup(emv_matr, tf_words)
+
+    conv_h1 = convolutional_layer(emb_sent, h1_size, h1_kernel_shape, tf.nn.tanh)
+
+    token_features_1 = tf.reshape(conv_h1, shape=(-1, h1_size))
+
+    local_h2 = tf.layers.dense(token_features_1,
+                               h2_size,
+                               activation=tf.nn.tanh,
+                               name="dense_h2")
+
+    tag_logits = tf.layers.dense(local_h2, n_tags, activation=None)
+    logits = tf.reshape(tag_logits, (-1, seq_len, n_tags))
+
+    with tf.variable_scope('loss') as l:
+        log_likelihood, transition_params = tf.contrib.crf.crf_log_likelihood(logits, tf_labels, tf_lengths)
+        loss = tf.reduce_mean(-log_likelihood)
+
+    train = tf.train.AdamOptimizer(lr).minimize(loss)
+
+    mask = tf.sequence_mask(tf_lengths, seq_len)
+    true_labels = tf.boolean_mask(tf_labels, mask)
+    argmax = tf.math.argmax(logits, axis=-1)
+    estimated_labels = tf.cast(tf.boolean_mask(argmax, mask), tf.int32)
+    accuracy = tf.contrib.metrics.accuracy(estimated_labels, true_labels)
+
+    return {
+        'words': tf_words,
+        'labels': tf_labels,
+        'lengths': tf_lengths,
+        'loss': loss,
+        'train': train,
+        'accuracy': accuracy,
+        'argmax': argmax
+    }
+
 
 
 # sent_flattened = tf.maximum(local_sent_enh, axis=1)
