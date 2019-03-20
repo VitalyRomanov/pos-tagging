@@ -250,7 +250,7 @@ terminals = assemble_model(init_vectors, max_len, len(t_map))
 
 
 
-epochs = 10
+epochs = 20
 
 
 print("Starting training")
