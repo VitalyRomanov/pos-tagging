@@ -135,14 +135,13 @@ def assemble_model(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=Fal
         return emb_matr
 
     def convolutional_layer(input, units, cnn_kernel_shape, activation=None):
-        # padded = tf.pad(input, tf.constant([[0, 0], [1, 1], [0, 0]]))
-        emb_sent_exp = tf.expand_dims(input, axis=3)
+        padded = tf.pad(input, tf.constant([[0, 0], [1, 1], [0, 0]]))
+        emb_sent_exp = tf.expand_dims(padded, axis=3)
         convolve = tf.layers.conv2d(emb_sent_exp,
                                     units,
                                     cnn_kernel_shape,
                                     activation=activation,
                                     data_format='channels_last',
-                                    padding='same',
                                     name="conv_h1")
         return tf.reshape(convolve, shape=(-1, convolve.shape[1], units))
 
