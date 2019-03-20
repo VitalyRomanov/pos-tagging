@@ -215,6 +215,7 @@ data_p = sys.argv[1]
 test_p = sys.argv[2]
 model_loc = sys.argv[3]
 target_task = sys.argv[4]
+epochs = sys.argv[5]
 max_len = 40
 
 s_sents, s_tags, s_chunks, tagset, tagmap, chunk_tags, chunkmap = read_data(data_p)
@@ -250,7 +251,7 @@ terminals = assemble_model(init_vectors, max_len, len(t_map))
 
 
 
-epochs = 20
+
 
 
 print("Starting training")
