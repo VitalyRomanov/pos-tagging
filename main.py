@@ -216,6 +216,7 @@ test_p = sys.argv[2]
 model_loc = sys.argv[3]
 target_task = sys.argv[4]
 epochs = int(sys.argv[5])
+gpu_mem = float(sys.argv[6])
 max_len = 40
 
 s_sents, s_tags, s_chunks, tagset, tagmap, chunk_tags, chunkmap = read_data(data_p)
@@ -256,7 +257,7 @@ terminals = assemble_model(init_vectors, max_len, len(t_map))
 
 print("Starting training")
 from tensorflow import GPUOptions
-gpu_options = GPUOptions(per_process_gpu_memory_fraction=0.3)
+gpu_options = GPUOptions(per_process_gpu_memory_fraction=gpu_mem)
 with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
     sess.run(tf.global_variables_initializer())
     sess.run(tf.local_variables_initializer())
