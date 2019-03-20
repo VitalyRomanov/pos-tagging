@@ -254,7 +254,9 @@ epochs = 10
 
 
 print("Starting training")
-with tf.Session() as sess:
+from tensorflow import GPUOptions
+gpu_options = GPUOptions(per_process_gpu_memory_fraction=0.3)
+with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
     sess.run(tf.global_variables_initializer())
     sess.run(tf.local_variables_initializer())
     summary_writer = tf.summary.FileWriter("model/", graph=sess.graph)
