@@ -165,6 +165,9 @@ test_mask = input_mask[train_sents:, ...]
 test_lbls = output_lbls[train_sents:, ...]
 test_lens = lens[train_sents:]
 
+for batch in create_batches(128, train_sent, train_mask, train_lbls, train_lens):
+    pass
+
 # from tensorflow import GPUOptions
 # gpu_options = GPUOptions(per_process_gpu_memory_fraction=gpu_mem)
 # with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
