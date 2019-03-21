@@ -113,10 +113,11 @@ def create_batches(batch_size, train_sent, train_mask, train_lbls, train_lens):
               train_lbls[i * batch_size: (i + 1) * batch_size, ...], \
               train_lens[i * batch_size: (i + 1) * batch_size, ...]
 
-    yield train_sent[batches * batch_size:, ...], \
-          train_mask[batches * batch_size, ...], \
-          train_lbls[batches * batch_size, ...], \
-          train_lens[batches * batch_size, ...]
+    if train_sent.shape[0] - batches * batch_size > 1:
+        yield train_sent[batches * batch_size:, ...], \
+              train_mask[batches * batch_size, ...], \
+              train_lbls[batches * batch_size, ...], \
+              train_lens[batches * batch_size, ...]
 
 
 data_p = sys.argv[1]
@@ -190,6 +191,8 @@ summary_writer = tf.summary.FileWriter("model/", graph=sess.graph)
 for e in range(epochs):
     for batch in create_batches(128, train_sent, train_mask, train_lbls, train_lens):
         sent, mask, lbl, lens = batch
+
+        print("mask", mask.shape)
 
         sess.run(terminals['train'], {
             terminals['input_ids']: sent,
