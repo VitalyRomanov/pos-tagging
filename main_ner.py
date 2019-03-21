@@ -8,7 +8,7 @@ from gensim.models import KeyedVectors
 from sklearn.metrics import f1_score
 
 
-def assemble_model(init_vectors, seq_len, n_tags, out_tag, lr=0.001, train_embeddings=False):
+def assemble_model(init_vectors, seq_len, n_tags, out_tag, lr=0.001, train_embeddings=True):
     voc_size = init_vectors.shape[0]
     emb_dim = init_vectors.shape[1]
 
