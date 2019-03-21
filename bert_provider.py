@@ -37,6 +37,7 @@ def convert_examples_to_features(examples, all_tags, tagmap, seq_length, tokeniz
     input_ids = np.zeros((len(examples), seq_length), dtype=np.int32)
     input_mask = np.zeros((len(examples), seq_length), dtype=np.int32)
     output_lbls = np.zeros((len(examples), seq_length-2), dtype=np.int32)
+    token_type = np.zeros((len(examples), seq_length-2), dtype=np.int32)
 
     lengths = []
 
@@ -47,6 +48,7 @@ def convert_examples_to_features(examples, all_tags, tagmap, seq_length, tokeniz
 
         bert_tokens = []
         bert_labels = []
+        bert_type = []
 
         for ind, token in enumerate(tokens):
             shards = tokenizer.tokenize(token) if token not in {"[CLS]", "[SEP]"} else [token]
@@ -58,7 +60,9 @@ def convert_examples_to_features(examples, all_tags, tagmap, seq_length, tokeniz
             # extend label to token segments
             if len(tkns) == 1:
                 bert_labels.extend([tags[ind-1]])
+                bert_type.extend([1])
             else:
+                bert_type.extend([1] + [0] * (len(tkns)-1))
                 if len(tags[ind-1][:2]) > 2 and tags[ind-1][:2] == 'B-':
                     bert_labels.extend([tags[ind-1]] + ['I-'+tags[ind-1][2:]] * (len(tkns)-1))
                 else:
@@ -68,12 +72,14 @@ def convert_examples_to_features(examples, all_tags, tagmap, seq_length, tokeniz
 
         token_ids = np.array(bert_tokens)
         lbls = np.array([tagmap.get(l, 0) for l in bert_labels])
+        bt = np.array(bert_type)
         input_ids[ex_index, :token_ids.size] = token_ids
         input_mask[ex_index, :token_ids.size] = 1
         output_lbls[ex_index, :lbls.size] = lbls
+        token_type[ex_index, :bt.size] = bt
         lengths.append(lbls.size)
 
-    return input_ids, input_mask, output_lbls, np.array(lengths, dtype=np.int32)
+    return input_ids, input_mask, output_lbls, token_type, np.array(lengths, dtype=np.int32)
 
 
 # ids, mask = convert_examples_to_features(
