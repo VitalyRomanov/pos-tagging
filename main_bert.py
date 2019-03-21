@@ -151,7 +151,8 @@ bert_model, layers, input_ids_tf, input_mask_tf = built_bert(
     bert_config=bert_config,
     init_checkpoint=init_checkpoint,
     seq_len=42)
-terminals = assemble_model(layers[-1][:, 1:-1, :], max_len, len(t_map))
+summed_layers = tf.add_n(layers)
+terminals = assemble_model(summed_layers[:, 1:-1, :], max_len, len(t_map))
 terminals['input_ids'] = input_ids_tf
 terminals['input_mask'] = input_mask_tf
 
