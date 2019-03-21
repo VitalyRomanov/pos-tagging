@@ -198,8 +198,6 @@ for e in range(epochs):
             terminals['lengths']: lens
         })
 
-        break
-
         # if ind % 10 == 0:
 
     sent, mask, lbl, type, lens = hold_out
@@ -212,7 +210,6 @@ for e in range(epochs):
         terminals['lengths']: lens[:1000]
     })
 
-    print(acc_val)
 
     # print(t_sents[0])
     # print(test[0])
