@@ -98,7 +98,7 @@ def built_bert(bert_config,
 
     model = modeling.BertModel(
         config=bert_config,
-        is_training=False,
+        is_training=True,
         input_ids=input_ids,
         input_mask=input_mask,
         token_type_ids=input_type_ids,
