@@ -5,6 +5,7 @@ import numpy as np
 from collections import Counter
 from scipy.linalg import toeplitz
 from gensim.models import KeyedVectors
+from sklearn.metrics import f1_score
 
 
 def assemble_model(init_vectors, seq_len, n_tags, out_tag, lr=0.001, train_embeddings=False):
@@ -74,7 +75,9 @@ def assemble_model(init_vectors, seq_len, n_tags, out_tag, lr=0.001, train_embed
         'loss': loss,
         'train': train,
         'accuracy': accuracy,
-        'argmax': argmax
+        'argmax': argmax,
+        'est_l': estimated_labels,
+        'true_l': true_labels
     }
 
 
@@ -232,7 +235,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
 
                 sentences, pos_tags, lens = hold_out
 
-                loss_val, acc_val, am = sess.run([terminals['loss'], terminals['accuracy'], terminals['argmax']], {
+                loss_val, acc_val, am, e, t = sess.run([terminals['loss'], terminals['accuracy'], terminals['argmax'], terminals['est_l'], terminals['true_l']], {
                     terminals['words']: sentences,
                     terminals['labels']: pos_tags,
                     terminals['lengths']: lens
@@ -242,7 +245,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         # print(test[0])
         # print([i_t_map[i] for i in am[0, :lens[0]]])
 
-        print("Epoch %d, loss %.4f, acc %.4f" % (e, loss_val, acc_val))
+        print("Epoch %d, loss %.4f, f1 %.4f" % (e, loss_val, f1_score(t, e)))
 
 # lens = map(lambda x: len(x), sents)
 # for w, c in Counter(lens).most_common():
