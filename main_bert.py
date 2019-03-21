@@ -192,7 +192,12 @@ for e in range(epochs):
     for batch in create_batches(128, train_sent, train_mask, train_lbls, train_lens):
         sent, mask, lbl, lens = batch
 
-        print("mask", mask.shape)
+        if len(mask.shape) < 2:
+            print("sent", sent.shape)
+            print("mask", mask.shape)
+            print("lbl", lbl.shape)
+            print("lens", lens.shape)
+            continue
 
         sess.run(terminals['train'], {
             terminals['input_ids']: sent,
