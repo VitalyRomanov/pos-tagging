@@ -245,6 +245,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         # print(test[0])
         # print([i_t_map[i] for i in am[0, :lens[0]]])
 
+        print(f1_score(t, e, average='weighted'))
         print("Epoch %d, loss %.4f, f1 %.4f" % (e, loss_val, f1_score(t, e, average='weighted')))
 
 # lens = map(lambda x: len(x), sents)
