@@ -149,6 +149,12 @@ all_targets = target + test
 input_ids, input_mask, output_lbls, lens = convert_examples_to_features(all_sents, all_targets, t_map, max_len + 2,
                                                                         tokenizer)
 
+print(input_ids.shape)
+print(input_mask.shape)
+print(output_lbls.shape)
+print(lens.shape)
+
+
 train_sent = input_ids[:train_sents, ...]
 train_mask = input_mask[:train_sents, ...]
 train_lbls = output_lbls[:train_sents, ...]
@@ -211,10 +217,10 @@ for e in range(epochs):
     sent, mask, lbl, lens = hold_out
 
     loss_val, acc_val, am = sess.run([terminals['loss'], terminals['accuracy'], terminals['argmax']], {
-        terminals['input_ids']: sent,
-        terminals['input_mask']: mask,
-        terminals['labels']: lbl,
-        terminals['lengths']: lens
+        terminals['input_ids']: sent[:200,...],
+        terminals['input_mask']: mask[:200,...],
+        terminals['labels']: lbl[:200,...],
+        terminals['lengths']: lens[:200]
     })
 
     # print(t_sents[0])
