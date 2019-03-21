@@ -7,7 +7,7 @@ from scipy.linalg import toeplitz
 from gensim.models import KeyedVectors
 
 
-def assemble_model(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
+def assemble_model_full(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
     voc_size = init_vectors.shape[0]
     emb_dim = init_vectors.shape[1]
 
@@ -119,11 +119,11 @@ def assemble_model(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=Fal
         'argmax': argmax
     }
 
-def assemble_model_window(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
+def assemble_model(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
     voc_size = init_vectors.shape[0]
     emb_dim = init_vectors.shape[1]
 
-    d_win = 3
+    d_win = 5
     h1_size = 500
     h2_size = 200
 
@@ -141,7 +141,7 @@ def assemble_model_window(init_vectors, seq_len, n_tags, lr=0.001, train_embeddi
         return emb_matr
 
     def convolutional_layer(input, units, cnn_kernel_shape, activation=None):
-        padded = tf.pad(input, tf.constant([[0, 0], [1, 1], [0, 0]]))
+        padded = tf.pad(input, tf.constant([[0, 0], [2, 2], [0, 0]]))
         emb_sent_exp = tf.expand_dims(padded, axis=3)
         convolve = tf.layers.conv2d(emb_sent_exp,
                                     units,
