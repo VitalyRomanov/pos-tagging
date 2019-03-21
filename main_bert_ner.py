@@ -6,7 +6,7 @@ from bert_provider import convert_examples_to_features, InputExample, built_bert
     init_checkpoint
 
 
-def assemble_model(embedding_layer, seq_len, n_tags, lr=0.001, train_embeddings=False):
+def assemble_model(embedding_layer, seq_len, n_tags, lr=0.0001, train_embeddings=False):
     emb_dim = embedding_layer.shape[2]
 
     d_win = 5
