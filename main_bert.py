@@ -113,11 +113,10 @@ def create_batches(batch_size, train_sent, train_mask, train_lbls, train_lens):
               train_lbls[i * batch_size: (i + 1) * batch_size, ...], \
               train_lens[i * batch_size: (i + 1) * batch_size, ...]
 
-    if train_sent.shape[0] - batches * batch_size > 1:
-        yield train_sent[batches * batch_size:, ...], \
-              train_mask[batches * batch_size, ...], \
-              train_lbls[batches * batch_size, ...], \
-              train_lens[batches * batch_size, ...]
+    yield train_sent[batches * batch_size:, ...], \
+          train_mask[batches * batch_size:, ...], \
+          train_lbls[batches * batch_size:, ...], \
+          train_lens[batches * batch_size:]
 
 
 data_p = sys.argv[1]
@@ -165,7 +164,9 @@ test_mask = input_mask[train_sents:, ...]
 test_lbls = output_lbls[train_sents:, ...]
 test_lens = lens[train_sents:]
 
-for batch in create_batches(128, train_sent, train_mask, train_lbls, train_lens):
+for ind, batch in enumerate(create_batches(128, train_sent, train_mask, train_lbls, train_lens)):
+    m = batch[1]
+    assert len(m.shape) == 2
     pass
 
 # from tensorflow import GPUOptions
