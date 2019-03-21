@@ -41,7 +41,7 @@ def assemble_model(embedding_layer, seq_len, n_tags, lr=0.001, train_embeddings=
     # mask = tf.cast(tf_type, dtype=tf.bool)
     true_labels = tf.boolean_mask(tf_labels, bool_mask)
     argmax = tf.math.argmax(logits, axis=-1)
-    estimated_labels = tf.cast(tf.boolean_mask(argmax, mask), tf.int32)
+    estimated_labels = tf.cast(tf.boolean_mask(argmax, bool_mask), tf.int32)
     accuracy = tf.contrib.metrics.accuracy(estimated_labels, true_labels)
 
     return {
@@ -191,7 +191,7 @@ sess.run(tf.global_variables_initializer())
 sess.run(tf.local_variables_initializer())
 summary_writer = tf.summary.FileWriter("model/", graph=sess.graph)
 for e in range(epochs):
-    for batch in create_batches(128, train_sent, train_mask, train_lbls, train_lens):
+    for batch in create_batches(128, train_sent, train_mask, train_lbls, train_type, train_lens):
         sent, mask, lbl, type, lens = batch
 
         if len(mask.shape) < 2:
