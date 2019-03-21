@@ -65,7 +65,7 @@ def assemble_model(init_vectors, seq_len, n_tags, out_tag, lr=0.001, train_embed
     true_labels = tf.math.equal(tf.boolean_mask(tf_labels, mask), out_tag)
     argmax = tf.math.argmax(logits, axis=-1)
     estimated_labels = tf.math.equal(tf.cast(tf.boolean_mask(argmax, mask), tf.int32), out_tag)
-    accuracy = tf.contrib.metrics.f1_score(tf.cast(estimated_labels, dtype=tf.int32), tf.cast(true_labels, dtype=tf.int32))
+    accuracy,_ = tf.contrib.metrics.f1_score(tf.cast(estimated_labels, dtype=tf.int32), tf.cast(true_labels, dtype=tf.int32))
 
     return {
         'words': tf_words,
