@@ -26,16 +26,12 @@ def assemble_model(embedding_layer, seq_len, n_tags, lr=0.001, train_embeddings=
     tag_logits = tf.layers.dense(local_h2, n_tags, activation=None)
     logits = tf.reshape(tag_logits, (-1, seq_len, n_tags))
 
-    print("here")
     bool_mask = tf.cast(tf_type, dtype=tf.bool)
     valid_logits_labels = tf.boolean_mask(logits, bool_mask)
-    print(valid_logits_labels.shape)
     true_labels = tf.boolean_mask(tf_labels, bool_mask)
-    print(true_labels.shape)
     true_labels_one_hot = tf.one_hot(true_labels, depth=n_tags)
-    print(true_labels_one_hot.shape)
 
-    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=true_labels_one_hot, logits=valid_logits_labels)
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=true_labels_one_hot, logits=valid_logits_labels))
 
     # with tf.variable_scope('loss') as l:
     #     log_likelihood, transition_params = tf.contrib.crf.crf_log_likelihood(logits, tf_labels, tf_lengths)
@@ -44,13 +40,9 @@ def assemble_model(embedding_layer, seq_len, n_tags, lr=0.001, train_embeddings=
     train = tf.train.AdamOptimizer(lr).minimize(loss)
 
     # mask = tf.cast(tf_type, dtype=tf.bool)
-    print("final shapes")
     argmax = tf.math.argmax(valid_logits_labels, axis=-1)
-    print(argmax.shape)
     estimated_labels = tf.cast(argmax, tf.int32)
-    print(estimated_labels.shape)
     accuracy = tf.contrib.metrics.accuracy(estimated_labels, true_labels)
-    print(estimated_labels.shape)
 
     return {
         'labels': tf_labels,
@@ -147,12 +139,17 @@ train_sents = len(s_sents)
 all_sents = s_sents + t_sents
 all_targets = target + test
 
+print("Assembling model")
 sess = tf.Session()
 bert_model, layers, input_ids_tf, input_mask_tf = built_bert(
     bert_config=bert_config,
     init_checkpoint=init_checkpoint,
     seq_len=42)
 terminals = assemble_model(layers[-1][:, 1:-1, :], max_len, len(t_map))
+terminals['input_ids'] = input_ids_tf
+terminals['input_mask'] = input_mask_tf
+
+print("Reading data")
 
 input_ids, input_mask, output_lbls, token_type, lens = convert_examples_to_features(all_sents, all_targets, t_map, max_len + 2,
                                                                         tokenizer)
@@ -182,10 +179,7 @@ for t, i in t_map.items():
 
 hold_out = (test_sent, test_mask, test_lbls, test_type, test_lens)
 
-print("Assembling model")
 
-terminals['input_ids'] = input_ids_tf
-terminals['input_mask'] = input_mask_tf
 
 print("Starting training")
 
