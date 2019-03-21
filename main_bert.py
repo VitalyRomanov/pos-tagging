@@ -166,8 +166,7 @@ bert_model, layers, input_ids_tf, input_mask_tf = built_bert(
     bert_config=bert_config,
     init_checkpoint=init_checkpoint,
     seq_len=42)
-sess.run(tf.global_variables_initializer())
-sess.run(tf.local_variables_initializer())
+
 
 i_t_map = dict()
 for t, i in t_map.items():
@@ -185,6 +184,8 @@ terminals['input_mask'] = input_mask_tf
 
 print("Starting training")
 
+sess.run(tf.global_variables_initializer())
+sess.run(tf.local_variables_initializer())
 summary_writer = tf.summary.FileWriter("model/", graph=sess.graph)
 for e in range(epochs):
     for batch in create_batches(128, train_sent, train_mask, train_lbls, train_lens):
