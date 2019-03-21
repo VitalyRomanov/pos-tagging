@@ -39,16 +39,16 @@ def assemble_model(embedding_layer, seq_len, n_tags, lr=0.001, train_embeddings=
 
     train = tf.train.AdamOptimizer(lr).minimize(loss)
 
-    # # mask = tf.cast(tf_type, dtype=tf.bool)
-    # argmax = tf.math.argmax(valid_logits_labels, axis=-1)
-    # estimated_labels = tf.cast(argmax, tf.int32)
-    # accuracy = tf.contrib.metrics.accuracy(estimated_labels, true_labels)
-
-    mask = tf.sequence_mask(tf_lengths, seq_len)
-    true_labels = tf.boolean_mask(tf_labels, mask)
-    argmax = tf.math.argmax(logits, axis=-1)
-    estimated_labels = tf.cast(tf.boolean_mask(argmax, mask), tf.int32)
+    # mask = tf.cast(tf_type, dtype=tf.bool)
+    argmax = tf.math.argmax(valid_logits_labels, axis=-1)
+    estimated_labels = tf.cast(argmax, tf.int32)
     accuracy = tf.contrib.metrics.accuracy(estimated_labels, true_labels)
+
+    # mask = tf.sequence_mask(tf_lengths, seq_len)
+    # true_labels = tf.boolean_mask(tf_labels, mask)
+    # argmax = tf.math.argmax(logits, axis=-1)
+    # estimated_labels = tf.cast(tf.boolean_mask(argmax, mask), tf.int32)
+    # accuracy = tf.contrib.metrics.accuracy(estimated_labels, true_labels)
 
     return {
         'labels': tf_labels,
