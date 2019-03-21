@@ -28,9 +28,10 @@ def assemble_model(embedding_layer, seq_len, n_tags, lr=0.001, train_embeddings=
 
     bool_mask = tf.cast(tf_type, dtype=tf.bool)
     valid_logits_labels = tf.boolean_mask(logits, bool_mask)
-    true_labels = tf.one_hot(tf.boolean_mask(tf_labels, bool_mask), depth=n_tags)
+    true_labels = tf.boolean_mask(tf_labels, bool_mask)
+    true_labels_one_hot = tf.one_hot(true_labels, depth=n_tags)
 
-    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=true_labels, logits=valid_logits_labels)
+    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=true_labels_one_hot, logits=valid_logits_labels)
 
     # with tf.variable_scope('loss') as l:
     #     log_likelihood, transition_params = tf.contrib.crf.crf_log_likelihood(logits, tf_labels, tf_lengths)
@@ -39,9 +40,8 @@ def assemble_model(embedding_layer, seq_len, n_tags, lr=0.001, train_embeddings=
     train = tf.train.AdamOptimizer(lr).minimize(loss)
 
     # mask = tf.cast(tf_type, dtype=tf.bool)
-    true_labels = tf.boolean_mask(tf_labels, bool_mask)
-    argmax = tf.math.argmax(logits, axis=-1)
-    estimated_labels = tf.cast(tf.boolean_mask(argmax, bool_mask), tf.int32)
+    argmax = tf.math.argmax(valid_logits_labels, axis=-1)
+    estimated_labels = tf.cast(argmax, tf.int32)
     accuracy = tf.contrib.metrics.accuracy(estimated_labels, true_labels)
 
     return {
