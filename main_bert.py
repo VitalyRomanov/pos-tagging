@@ -164,10 +164,6 @@ test_mask = input_mask[train_sents:, ...]
 test_lbls = output_lbls[train_sents:, ...]
 test_lens = lens[train_sents:]
 
-for ind, batch in enumerate(create_batches(128, train_sent, train_mask, train_lbls, train_lens)):
-    m = batch[1]
-    assert len(m.shape) == 2
-    pass
 
 # from tensorflow import GPUOptions
 # gpu_options = GPUOptions(per_process_gpu_memory_fraction=gpu_mem)
