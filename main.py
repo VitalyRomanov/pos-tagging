@@ -7,7 +7,7 @@ from scipy.linalg import toeplitz
 from gensim.models import KeyedVectors
 
 
-def assemble_model_full(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
+def assemble_model(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
     voc_size = init_vectors.shape[0]
     emb_dim = init_vectors.shape[1]
 
@@ -31,7 +31,7 @@ def assemble_model_full(init_vectors, seq_len, n_tags, lr=0.001, train_embedding
 
 
 
-    h1_kernel_shape = (d_win, emb_dim + pos_emb_size)
+    h1_kernel_shape = (d_win, emb_dim)
 
     tf_words = tf.placeholder(shape=(None, seq_len), dtype=tf.int32, name="words")
     tf_labels = tf.placeholder(shape=(None, seq_len), dtype=tf.int32, name="labels")
@@ -44,7 +44,7 @@ def assemble_model_full(init_vectors, seq_len, n_tags, lr=0.001, train_embedding
         emb_matr = tf.concat([embs, pad], axis=0)
         return emb_matr
 
-    def convolutional_layer(input, units, cnn_kernel_shape, activation=None):
+    def convolutional_layer(input, units, cnn_kernel_shape, activation=None, name="conv_h1"):
         # padded = tf.pad(input, tf.constant([[0, 0], [1, 1], [0, 0]]))
         # emb_sent_exp = tf.expand_dims(input, axis=3)
         convolve = tf.layers.conv2d(input,
@@ -52,30 +52,36 @@ def assemble_model_full(init_vectors, seq_len, n_tags, lr=0.001, train_embedding
                                     cnn_kernel_shape,
                                     activation=activation,
                                     data_format='channels_last',
-                                    name="conv_h1")
+                                    name=name)
         return tf.reshape(convolve, shape=(-1, convolve.shape[1], units))
 
     emv_matr = create_embedding_matrix()
 
     emb_sent = tf.expand_dims(tf.nn.embedding_lookup(emv_matr, tf_words), axis=3)
 
-    with tf.variable_scope("input_dicing") as id:
-        positions = []
-        for i in range(seq_len):
-            positions.append(tf.concat([
-                emb_sent,
-                tf.tile(tf.expand_dims(pos_emb[i, ...],
-                               axis=0), [tf.shape(emb_sent)[0], 1, 1, 1])
-            ], axis=2))
+    # with tf.variable_scope("input_dicing") as id:
+    #     positions = []
+    #     for i in range(seq_len):
+    #         positions.append(tf.concat([
+    #             emb_sent,
+    #             tf.tile(tf.expand_dims(pos_emb[i, ...],
+    #                            axis=0), [tf.shape(emb_sent)[0], 1, 1, 1])
+    #         ], axis=2))
 
-    def cnn_pool(input_):
-        local_h1 = convolutional_layer(input_, h1_size, h1_kernel_shape, activation=tf.tanh)
-        return tf.reduce_max(local_h1, axis=1)
+    # def cnn_pool(input_):
+    #     local_h1 = convolutional_layer(input_, h1_size, h1_kernel_shape, activation=None)
+    #     return tf.reduce_max(local_h1, axis=1)
 
-    with tf.variable_scope("cnn_feature_extraction", reuse=tf.AUTO_REUSE) as cnn:
+    with tf.variable_scope("cnn_feature_extraction") as cnn:
+        temp_cnn_emb = convolutional_layer(emb_sent, h1_size, h1_kernel_shape, activation=None)
+
+        pos_cnn = convolutional_layer(pos_emb, h1_size, (d_win, pos_emb_size),
+                                      activation=None, name="conv_pos")
+
         cnn_pool_feat = []
-        for pos in positions:
-            cnn_pool_feat.append(tf.expand_dims(cnn_pool(pos), axis=1))
+        for i in range(seq_len):
+            position_features = tf.expand_dims(pos_cnn[i,...], axis=0, name="exp_dim_%d" % i)
+            cnn_pool_feat.append(tf.expand_dims(tf.nn.tanh(tf.reduce_max(temp_cnn_emb + position_features, axis=1)), axis=1))
 
         cnn_pool_features = tf.concat(cnn_pool_feat, axis=1)
 
@@ -113,7 +119,7 @@ def assemble_model_full(init_vectors, seq_len, n_tags, lr=0.001, train_embedding
         'argmax': argmax
     }
 
-def assemble_model(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
+def assemble_model_window(init_vectors, seq_len, n_tags, lr=0.001, train_embeddings=False):
     voc_size = init_vectors.shape[0]
     emb_dim = init_vectors.shape[1]
 
