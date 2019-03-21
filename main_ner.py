@@ -235,7 +235,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
 
                 sentences, pos_tags, lens = hold_out
 
-                loss_val, acc_val, am, e, t = sess.run([terminals['loss'], terminals['accuracy'], terminals['argmax'], terminals['est_l'], terminals['true_l']], {
+                loss_val, acc_val, am, est, tr = sess.run([terminals['loss'], terminals['accuracy'], terminals['argmax'], terminals['est_l'], terminals['true_l']], {
                     terminals['words']: sentences,
                     terminals['labels']: pos_tags,
                     terminals['lengths']: lens
@@ -245,8 +245,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         # print(test[0])
         # print([i_t_map[i] for i in am[0, :lens[0]]])
 
-        print(f1_score(t, e, average='weighted'))
-        print("Epoch %d, loss %.4f, f1 %.4f" % (e, loss_val, f1_score(t, e, average='weighted')))
+        print("Epoch %d, loss %.4f, f1 %.4f" % (e, loss_val, f1_score(tr, est, average='weighted')))
 
 # lens = map(lambda x: len(x), sents)
 # for w, c in Counter(lens).most_common():
