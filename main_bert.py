@@ -26,10 +26,14 @@ def assemble_model(embedding_layer, seq_len, n_tags, lr=0.001, train_embeddings=
     tag_logits = tf.layers.dense(local_h2, n_tags, activation=None)
     logits = tf.reshape(tag_logits, (-1, seq_len, n_tags))
 
+    print("here")
     bool_mask = tf.cast(tf_type, dtype=tf.bool)
     valid_logits_labels = tf.boolean_mask(logits, bool_mask)
+    print(valid_logits_labels.shape)
     true_labels = tf.boolean_mask(tf_labels, bool_mask)
+    print(true_labels.shape)
     true_labels_one_hot = tf.one_hot(true_labels, depth=n_tags)
+    print(true_labels_one_hot.shape)
 
     loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=true_labels_one_hot, logits=valid_logits_labels)
 
@@ -40,9 +44,13 @@ def assemble_model(embedding_layer, seq_len, n_tags, lr=0.001, train_embeddings=
     train = tf.train.AdamOptimizer(lr).minimize(loss)
 
     # mask = tf.cast(tf_type, dtype=tf.bool)
+    print("final shapes")
     argmax = tf.math.argmax(valid_logits_labels, axis=-1)
+    print(argmax.shape)
     estimated_labels = tf.cast(argmax, tf.int32)
+    print(estimated_labels.shape)
     accuracy = tf.contrib.metrics.accuracy(estimated_labels, true_labels)
+    print(estimated_labels.shape)
 
     return {
         'labels': tf_labels,
@@ -139,13 +147,15 @@ train_sents = len(s_sents)
 all_sents = s_sents + t_sents
 all_targets = target + test
 
+sess = tf.Session()
+bert_model, layers, input_ids_tf, input_mask_tf = built_bert(
+    bert_config=bert_config,
+    init_checkpoint=init_checkpoint,
+    seq_len=42)
+terminals = assemble_model(layers[-1][:, 1:-1, :], max_len, len(t_map))
+
 input_ids, input_mask, output_lbls, token_type, lens = convert_examples_to_features(all_sents, all_targets, t_map, max_len + 2,
                                                                         tokenizer)
-
-print(input_ids.shape)
-print(input_mask.shape)
-print(output_lbls.shape)
-print(lens.shape)
 
 
 train_sent = input_ids[:train_sents, ...]
@@ -164,24 +174,16 @@ test_lens = lens[train_sents:]
 # from tensorflow import GPUOptions
 # gpu_options = GPUOptions(per_process_gpu_memory_fraction=gpu_mem)
 # with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
-sess = tf.Session()
-bert_model, layers, input_ids_tf, input_mask_tf = built_bert(
-    bert_config=bert_config,
-    init_checkpoint=init_checkpoint,
-    seq_len=42)
 
 
 i_t_map = dict()
 for t, i in t_map.items():
     i_t_map[i] = t
 
-print("Reading data")
-batches = create_batches(128, train_sent, train_mask, train_lbls, test_type, train_lens)
-
 hold_out = (test_sent, test_mask, test_lbls, test_type, test_lens)
 
 print("Assembling model")
-terminals = assemble_model(layers[-1][:, 1:-1, :], max_len, len(t_map))
+
 terminals['input_ids'] = input_ids_tf
 terminals['input_mask'] = input_mask_tf
 
@@ -189,17 +191,10 @@ print("Starting training")
 
 sess.run(tf.global_variables_initializer())
 sess.run(tf.local_variables_initializer())
-summary_writer = tf.summary.FileWriter("model/", graph=sess.graph)
+# summary_writer = tf.summary.FileWriter("model/", graph=sess.graph)
 for e in range(epochs):
-    for batch in create_batches(128, train_sent, train_mask, train_lbls, train_type, train_lens):
+    for batch in create_batches(10, train_sent, train_mask, train_lbls, train_type, train_lens):
         sent, mask, lbl, type, lens = batch
-
-        if len(mask.shape) < 2:
-            print("sent", sent.shape)
-            print("mask", mask.shape)
-            print("lbl", lbl.shape)
-            print("lens", lens.shape)
-            continue
 
         sess.run(terminals['train'], {
             terminals['input_ids']: sent,
@@ -208,6 +203,8 @@ for e in range(epochs):
             terminals['type']: type,
             terminals['lengths']: lens
         })
+
+        break
 
         # if ind % 10 == 0:
 
@@ -220,6 +217,8 @@ for e in range(epochs):
         terminals['type']: type[:1000,...],
         terminals['lengths']: lens[:1000]
     })
+
+    print(acc_val)
 
     # print(t_sents[0])
     # print(test[0])
